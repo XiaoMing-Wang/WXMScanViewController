@@ -14,6 +14,6 @@
     return self;
 }
 - (void)initializationInterface {
-    self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.75];
+    self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.5];
 }
 @end

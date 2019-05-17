@@ -11,10 +11,13 @@
 #import "WXMScanCenterView.h"
 #import "WXMScanAssistant.h"
 #import "WXMScanBottomView.h"
+#import "WQComponentHeader.h"
+#import "WXMPhotoInterFaceProtocol.h"
 
 @interface WXMScanViewController ()<AVCaptureMetadataOutputObjectsDelegate>
 
 /** 设备 */
+@property (readwrite, nonatomic) UIStatusBarStyle lastStatusBarStyle;
 @property (nonatomic, strong) AVCaptureDevice *device;
 @property (nonatomic, strong) AVCaptureSession *session;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *preview;
@@ -24,6 +27,7 @@
 @property (nonatomic, strong) WXMScanCenterView *centerView;
 @property (nonatomic, strong) WXMScanBottomView *bottomView;
 @property (nonatomic, assign) BOOL isScan;
+@property (nonatomic, assign) CGFloat initialPinchZoom;
 @end
 
 @implementation WXMScanViewController
@@ -68,6 +72,7 @@
         [self initializationInterface:input error:error];
     });
 }
+
 - (void)initializationInterface:(AVCaptureDeviceInput *)input error:(NSError *)error {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (error) {
@@ -119,6 +124,7 @@
         [self.view.layer insertSublayer:self.preview atIndex:0];
         [self.session startRunning];
         
+        [self.view addGestureRecognizer:[[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(pinchDetected:)]];
     });
 }
 #pragma mark __________________________________________________________ 扫码成功回调
@@ -130,11 +136,39 @@
         AVMetadataMachineReadableCodeObject *obj = metadataObjects[0];
         self.isScan = ![WXMScanAssistant wxm_handleResultWithString:obj.stringValue scanVC:self];
     } else {
-        [WXMScanAssistant showAlertViewControllerWithTitle:@"" message:@"无法识别二维码内容..." cancel:@"返回" otherAction:@[@"重试"] completeBlock:^(NSInteger buttonIndex) {
-            if (!buttonIndex) [self leaveCurrentViewcontroller];
-            if (buttonIndex) self.isScan = NO;
-        }];
+        [self showAlertController];
     }
+}
+
+/** 摄像头拉伸 */
+- (void)pinchDetected:(UIPinchGestureRecognizer *)recogniser {
+    if (!_device) return;
+    if (recogniser.state == UIGestureRecognizerStateBegan) _initialPinchZoom = _device.videoZoomFactor;
+    NSError *error = nil;
+    [_device lockForConfiguration:&error];
+    
+    if (!error) {
+        CGFloat scale = recogniser.scale;
+        if (scale > 1) scale = _initialPinchZoom - (1 - scale) * 1.5;
+        else scale = _initialPinchZoom + (scale - 1) * 4.5;
+        
+        if (scale < 1) scale = 1;
+        if (scale > 6) scale = 6;
+        _device.videoZoomFactor = scale;
+        [_device unlockForConfiguration];
+    }
+}
+/** 识别图片中的二维码 */
+- (NSString *)scQRReaderForImage:(UIImage *)qrimage{
+    @try {
+        CIContext *context = [CIContext contextWithOptions:nil];
+        CIDetector *detector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:context options:@{ CIDetectorAccuracy: CIDetectorAccuracyHigh }];
+        CIImage *image = [CIImage imageWithCGImage:qrimage.CGImage];
+        NSArray *features = [detector featuresInImage:image];
+        CIQRCodeFeature *feature = [features firstObject];
+        NSString *result = feature.messageString;
+        return result;
+    } @catch (NSException *exception) {} @finally {}
 }
 - (void)leaveCurrentViewcontroller {
     [self endScan];
@@ -152,12 +186,21 @@
 }
 /** 相册 */
 - (void)rightBarButtonItem {
-    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"相册" style:0 target:self action:@selector(rightTouch)];
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"相册" style:0 target:self action:@selector(pushPhotoViewController)];
     item.tintColor = WXMScan_NColor;
     self.navigationItem.rightBarButtonItem = item;
 }
-- (void)rightTouch {
+- (void)pushPhotoViewController {
+    NSString * urlPermission = @"parameter://WXMPhotoInterFaceProtocol/photoPermission";
+    NSString * urlPhotoAlbum = @"present://WXMPhotoInterFaceProtocol/routeAchieveWXMPhotoViewController";
+    BOOL canOpen = [[WXMCPRouter resultsOpenUrl:urlPermission] boolValue];
+    if (!canOpen) return;
+    [WXMCPRouter openUrl:urlPhotoAlbum event_id:^(id _Nullable obj) {
+        NSString * string = [self scQRReaderForImage:obj];
+        self.isScan = ![WXMScanAssistant wxm_handleResultWithString:string scanVC:self];
+    }];
     
+
 }
 /** 导航栏 */
 - (void)setupNavigation {
@@ -179,10 +222,6 @@
     UIGraphicsEndImageContext();
     return image;
 }
-- (void)viewDidDisappear:(BOOL)animated {
-    [super viewDidDisappear:animated];
-    if (self.jumpType == WXMScanJumpTypePush && !self.navigationController) [self endScan];
-}
 - (WXMScanCenterView *)centerView {
     if (!_centerView)_centerView = [[WXMScanCenterView alloc] initWithFrame:WXMScan_CenterRect];
     return _centerView;
@@ -197,5 +236,39 @@
         _blackView.backgroundColor = [UIColor blackColor];
     }
     return _blackView;
+}
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    self.lastStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
+    if (!self.navigationController) return;
+    NSDictionary *attributes = @{NSForegroundColorAttributeName : [UIColor whiteColor]};
+    [self.navigationController.navigationBar setTitleTextAttributes:attributes];
+    [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
+}
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [UIApplication sharedApplication].statusBarStyle = self.lastStatusBarStyle;
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    if (self.jumpType == WXMScanJumpTypePush && !self.navigationController) [self endScan];
+}
+/** 无法识别 */
+- (void)showAlertController {
+    NSString *msg = @"无法识别二维码内容...";
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@""
+                                                                   message:msg
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"返回" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        [self leaveCurrentViewcontroller];
+    }];
+    UIAlertAction *action = [UIAlertAction actionWithTitle:@"重试" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        self.isScan = NO;
+    }];
+    [alert addAction:cancle];
+    [alert addAction:action];
+    UIWindow * window = [[[UIApplication sharedApplication] delegate] window];
+    [window.rootViewController presentViewController:alert animated:YES completion:nil];
 }
 @end

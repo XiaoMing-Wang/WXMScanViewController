@@ -17,11 +17,5 @@
 /* 处理扫码结果 YES继续扫码 */
 + (BOOL)wxm_handleResultWithString:(NSString *)obj scanVC:(UIViewController*)scanVC;
 
-/* 显示弹窗 */
-+ (void)showAlertViewControllerWithTitle:(NSString *)title
-                                 message:(NSString *)message
-                                  cancel:(NSString *)cancel
-                             otherAction:(NSArray *)otherAction
-                           completeBlock:(void (^)(NSInteger buttonIndex))block;
 
 @end
