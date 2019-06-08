@@ -12,6 +12,7 @@
 @end
 
 @implementation WXMScanCenterView
+
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
         [self initializationInterface];
@@ -20,6 +21,7 @@
     }
     return self;
 }
+
 - (void)initializationInterface {
     
     /** 四个角和线条 */
@@ -45,6 +47,7 @@
         [self addSubview:imgView];
     }];
 }
+
 - (void)moveImageAnimations {
     _animationImage = [[UIImageView alloc] initWithFrame:self.bounds];
     _animationImage.alpha = 0.8;
@@ -75,18 +78,21 @@
     group.animations = @[scanNetAnimation, animation];
     [_animationImage.layer addAnimation:group forKey:nil];
 }
+
 /** 基本设置 */
 - (void)baseInterfaceSetup {
     self.alpha = 0;
     self.transform = CGAffineTransformMakeScale(0.1, 0.1);
     self.layer.masksToBounds = YES;
 }
+
 - (void)reductionOld {
     [UIView animateWithDuration:0.25 delay:0.0 options:UIViewAnimationOptionCurveEaseOut animations:^{
         self.transform = CGAffineTransformIdentity;
         self.alpha = 1;
     } completion:nil];
 }
+
 - (NSArray *)array {
     return @[@"qr_top_left",@"qr_top_right",@"qr_bottom_left",@"qr_bottom_right"];
 }

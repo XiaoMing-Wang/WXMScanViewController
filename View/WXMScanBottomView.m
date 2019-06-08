@@ -9,10 +9,12 @@
 #import "WXMScanBottomView.h"
 
 @implementation WXMScanBottomView
+
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) [self initializationInterface];
     return self;
 }
+
 - (void)initializationInterface {
     self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.5];
 }

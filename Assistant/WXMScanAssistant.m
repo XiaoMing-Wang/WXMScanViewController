@@ -7,7 +7,7 @@
 //
 #import <AVFoundation/AVFoundation.h>
 #import "WXMScanAssistant.h"
-#import "WXMWKWebViewController.h"
+/** #import "WXMWKWebViewController.h" */
 
 @interface WXMScanAssistant ()
 @end
@@ -21,11 +21,11 @@
 //    [self removeScanViewController:scanVC];
     
     NSURL *url = [NSURL URLWithString:obj ?: @""];
-    if ([[UIApplication sharedApplication] canOpenURL:url]) {
-        WXMWKWebViewController * wk = [WXMWKWebViewController wkWebViewControllerWithTitle:@"" urlString:obj];
-        [scanVC.navigationController pushViewController:wk animated:YES];
-        [self removeScanViewController:scanVC];
-    }
+//    if ([[UIApplication sharedApplication] canOpenURL:url]) {
+//        WXMWKWebViewController * wk = [WXMWKWebViewController wkWebViewControllerWithTitle:@"" urlString:obj];
+//        [scanVC.navigationController pushViewController:wk animated:YES];
+//        [self removeScanViewController:scanVC];
+//    }
     
     return NO;
 }
@@ -50,6 +50,7 @@
     }
     return YES;
 }
+
 /** 跳转去掉扫码界面 */
 + (void)removeScanViewController:(UIViewController *)scanVC {
     if (scanVC.navigationController == nil) return;

@@ -11,7 +11,6 @@
 #import "WXMScanCenterView.h"
 #import "WXMScanAssistant.h"
 #import "WXMScanBottomView.h"
-#import "WQComponentHeader.h"
 #import "WXMPhotoInterFaceProtocol.h"
 
 @interface WXMScanViewController ()<AVCaptureMetadataOutputObjectsDelegate>
@@ -158,6 +157,7 @@
         [_device unlockForConfiguration];
     }
 }
+
 /** 识别图片中的二维码 */
 - (NSString *)scQRReaderForImage:(UIImage *)qrimage{
     @try {
@@ -170,11 +170,13 @@
         return result;
     } @catch (NSException *exception) {} @finally {}
 }
+
 - (void)leaveCurrentViewcontroller {
     [self endScan];
     if (_jumpType == WXMScanJumpTypePush) [self.navigationController popViewControllerAnimated:YES];
     if (_jumpType == WXMScanJumpTypePresent) [self dismissViewControllerAnimated:YES completion:nil];
 }
+
 /** 结束扫码 */
 - (void)endScan {
     [self.session stopRunning];
@@ -184,24 +186,27 @@
     self.centerView = nil;
     self.bottomView = nil;
 }
+
 /** 相册 */
 - (void)rightBarButtonItem {
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"相册" style:0 target:self action:@selector(pushPhotoViewController)];
     item.tintColor = WXMScan_NColor;
     self.navigationItem.rightBarButtonItem = item;
 }
+
 - (void)pushPhotoViewController {
-    NSString * urlPermission = @"parameter://WXMPhotoInterFaceProtocol/photoPermission";
-    NSString * urlPhotoAlbum = @"present://WXMPhotoInterFaceProtocol/routeAchieveWXMPhotoViewController";
-    BOOL canOpen = [[WXMCPRouter resultsOpenUrl:urlPermission] boolValue];
-    if (!canOpen) return;
-    [WXMCPRouter openUrl:urlPhotoAlbum event_id:^(id _Nullable obj) {
-        NSString * string = [self scQRReaderForImage:obj];
-        self.isScan = ![WXMScanAssistant wxm_handleResultWithString:string scanVC:self];
-    }];
+//    NSString * urlPermission = @"parameter://WXMPhotoInterFaceProtocol/photoPermission";
+//    NSString * urlPhotoAlbum = @"present://WXMPhotoInterFaceProtocol/routeAchieveWXMPhotoViewController";
+//    BOOL canOpen = [[WXMCPRouter resultsOpenUrl:urlPermission] boolValue];
+//    if (!canOpen) return;
+//    [WXMCPRouter openUrl:urlPhotoAlbum event_id:^(id _Nullable obj) {
+//        NSString * string = [self scQRReaderForImage:obj];
+//        self.isScan = ![WXMScanAssistant wxm_handleResultWithString:string scanVC:self];
+//    }];
     
 
 }
+
 /** 导航栏 */
 - (void)setupNavigation {
     UIImage *img = [self imageWithColor:[WXMScan_NColor colorWithAlphaComponent:0.0]];
@@ -211,6 +216,7 @@
     [self.navigationController.navigationBar setBackgroundImage:img forBarMetrics:UIBarMetricsDefault];
     [self.navigationController.navigationBar setTitleTextAttributes:attributes];
 }
+
 /** 颜色制作图片 特定大小 */
 - (UIImage *)imageWithColor:(UIColor *)color {
     CGRect rect = CGRectMake(0, 0, 1, 1);
@@ -222,14 +228,17 @@
     UIGraphicsEndImageContext();
     return image;
 }
+
 - (WXMScanCenterView *)centerView {
     if (!_centerView)_centerView = [[WXMScanCenterView alloc] initWithFrame:WXMScan_CenterRect];
     return _centerView;
 }
+
 - (WXMScanBottomView *)bottomView {
     if (!_bottomView) _bottomView = [[WXMScanBottomView alloc] initWithFrame:WXMScan_BottomRect];
     return _bottomView;
 }
+
 - (UIView *)blackView {
     if (!_blackView) {
         _blackView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
@@ -237,6 +246,7 @@
     }
     return _blackView;
 }
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     self.lastStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
@@ -245,6 +255,7 @@
     [self.navigationController.navigationBar setTitleTextAttributes:attributes];
     [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
 }
+
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     [UIApplication sharedApplication].statusBarStyle = self.lastStatusBarStyle;
@@ -254,6 +265,7 @@
     [super viewDidDisappear:animated];
     if (self.jumpType == WXMScanJumpTypePush && !self.navigationController) [self endScan];
 }
+
 /** 无法识别 */
 - (void)showAlertController {
     NSString *msg = @"无法识别二维码内容...";

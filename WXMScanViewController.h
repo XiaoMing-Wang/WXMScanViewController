@@ -5,14 +5,14 @@
 //  Created by edz on 2019/5/5.
 //  Copyright © 2019年 wq. All rights reserved.
 //
-//导航栏颜色
+/** 导航栏颜色 */
 #define WXMScan_NColor [UIColor whiteColor]
 
-//扫码中心区域 256容易识别
+/** 扫码中心区域 256容易识别 */
 #define KRectSize ([UIScreen mainScreen].bounds.size)
-#define WXMScan_CenterRect CGRectMake((KRectSize.width - 256) / 2.0, 205, 256, 252)
+#define WXMScan_CenterRect CGRectMake((KRectSize.width - 256) / 2.0, 205, 256, 256)
 
-//底部工具栏
+/** 底部工具栏 */
 #define WXMScan_BottomRect CGRectMake(0, KRectSize.height - 80, KRectSize.width, 80)
 
 #import <UIKit/UIKit.h>
